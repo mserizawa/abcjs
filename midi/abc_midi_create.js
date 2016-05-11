@@ -40,6 +40,10 @@ if (!window.ABCJS.midi)
 		midi.setGlobalInfo(commands.tempo, title);
 
 		for (var i = 0; i < commands.tracks.length; i++) {
+			if (i == 1) {
+				// HACK: force chord tracks to channel 2
+				midi.setChannel(2);
+			}
 			midi.startTrack();
 			for (var j = 0; j < commands.tracks[i].length; j++) {
 				var event = commands.tracks[i][j];
