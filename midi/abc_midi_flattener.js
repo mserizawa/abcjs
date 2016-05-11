@@ -40,6 +40,7 @@ if (!window.ABCJS.midi)
 	var currentTrack;
 	var pitchesTied;
 	var lastNoteDurationPosition;
+	var isSwing;
 
 	var meter;
 	var chordTrack;
@@ -50,7 +51,7 @@ if (!window.ABCJS.midi)
 
 	var normalBreakBetweenNotes = 1.0/128;	// a 128th note of silence between notes for articulation.
 
-	window.ABCJS.midi.flatten = function(voices) {
+	window.ABCJS.midi.flatten = function(voices, options) {
 		barAccidentals = [];
 		accidentals = [0,0,0,0,0,0,0];
 		transpose = 0;
@@ -64,6 +65,10 @@ if (!window.ABCJS.midi)
 		currentTrack = undefined;
 		pitchesTied = {};
 		lastNoteDurationPosition = -1;
+		isSwing = false;
+		if (options.isSwing) {
+			isSwing = options.isSwing;
+		}
 
 		// For resolving chords.
 		meter = undefined;
@@ -81,7 +86,14 @@ if (!window.ABCJS.midi)
 				var element = voice[j];
 				switch (element.el_type) {
 					case "note":
-						writeNote(element);
+						nextNote = null;
+						if (j + 1 < voice.length) {
+							nextElem = voice[j + 1];
+							if (nextElem.el_type == "note") {
+								nextNote = nextElem;
+							}
+						}
+						writeNote(element, nextNote);
 						break;
 					case "key":
 						accidentals = setKeySignature(element);
@@ -173,7 +185,26 @@ if (!window.ABCJS.midi)
 		return null;
 	}
 
-	function writeNote(elem) {
+	function swingify(duration, barBeat, nextNote) {
+		if (duration % 0.125 == 0 && duration % 0.250 != 0) {
+			var fixedBarBeat = Math.floor(barBeat * 100) / 100;
+			isStartBeat = fixedBarBeat % 0.250 == 0;
+			beat = Math.floor(duration / 0.250)
+			if (isStartBeat) {
+				rest = 0.250 - (duration % 0.250)
+				if (nextNote && nextNote.duration*multiplier >= 0.125) {
+					rest = rest * 2 / 3 * 2
+					rest = Math.floor(rest * 100) / 100
+				}
+			} else {
+				rest = 0.250 - (barBeat % 0.250)
+			}
+			duration = beat * 0.250 + rest
+		}
+		return duration;
+	}
+
+	function writeNote(elem, nextNote) {
 		//
 		// Create a series of note events to append to the current track.
 		// The output event is one of: { pitchStart: pitch_in_abc_units, volume: from_1_to_64 }
@@ -214,6 +245,9 @@ if (!window.ABCJS.midi)
 		}
 
 		var duration = elem.duration*multiplier;
+		if (isSwing) {
+			duration = swingify(duration, barBeat, nextNote);
+		}
 		barBeat += duration;
 
 		// if there are grace notes, then also play them.

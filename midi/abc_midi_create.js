@@ -27,7 +27,7 @@ if (!window.ABCJS.midi)
 
 	window.ABCJS.midi.create = function(abcTune, options) {
 		var sequence = window.ABCJS.midi.sequence(abcTune, options);
-		var commands = window.ABCJS.midi.flatten(sequence);
+		var commands = window.ABCJS.midi.flatten(sequence, options);
 		var midi = window.ABCJS.midi.rendererFactory(false);
 
 		if (commands.instrument !== undefined)
