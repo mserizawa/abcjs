@@ -484,7 +484,9 @@ if (!window.ABCJS.midi)
 		var num = meter.num;
 		var den = meter.den;
 		var beatLength = 1/den;
-		var pattern = rhythmPatterns[num+'/'+den];
+		// HACK: ignore preset rhythmPatterns
+		// var pattern = rhythmPatterns[num+'/'+den];
+		var pattern = null;
 		var thisMeasureLength = parseInt(num,10)/parseInt(den,10);
 		// See if this is a full measure: unfortunately, with triplets, there isn't an exact match, what with the floating point, so we just see if it is "close".
 		var portionOfAMeasure = Math.abs(thisMeasureLength - barBeat);
@@ -492,7 +494,12 @@ if (!window.ABCJS.midi)
 			pattern = [];
 			var beatsPresent = barBeat / beatLength;
 			for (var p = 0; p < beatsPresent; p++)
-				pattern.push("chick");
+				// HACK: force pattern ['chick', '']
+				if (p % 2 == 0) {
+					pattern.push("chick");
+				} else {
+					pattern.push("");
+				}
 		}
 
 		if (currentChords.length === 0) { // there wasn't a new chord this measure, so use the last chord declared.
