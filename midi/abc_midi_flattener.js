@@ -330,6 +330,14 @@ if (!window.ABCJS.midi)
 			actualPitch +=  accidentals[extractNote(pitch)];
 		}
 		actualPitch += transpose;
+
+		if (instrument !== null && instrument !== undefined) {
+			switch (instrument) {
+				case 66:
+				case 32:
+					actualPitch -= 12;
+			}
+		}
 		return actualPitch;
 	}
 
